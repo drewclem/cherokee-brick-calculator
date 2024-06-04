@@ -1,66 +1,89 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
+import React, {useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
+  Image,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View,
+  TouchableOpacity,
+  Button,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+type SectionProps = PropsWithChildren<{}>;
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+function Section({children}: SectionProps): React.JSX.Element {
+  return <View style={styles.sectionContainer}>{children}</View>;
 }
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: 'white',
+    color: 'black',
   };
+
+  type SelectedBrickProps = {
+    label: string;
+    value: number;
+    logo?: string;
+  };
+
+  const [total, setTotal] = useState<number>(0);
+  const [amount, setAmount] = useState<string>('');
+  const [selectedBrick, setSelectedBrick] = useState<SelectedBrickProps>();
+
+  function calculateTotal() {
+    const amountInt = Number(amount);
+    if (!selectedBrick || !amount) {
+      return;
+    }
+
+    const firstInt = amountInt / 1000;
+    const final = firstInt * selectedBrick.value;
+
+    setTotal(Math.round(final * 100) / 100);
+  }
+
+  const options = [
+    {
+      label: 'Modular',
+      value: 6.86,
+    },
+    {
+      label: 'Queen 8”',
+      value: 5.5,
+    },
+    {
+      label: 'Engineer',
+      value: 5.76,
+    },
+    {
+      label: 'Kind Size',
+      value: 4.55,
+    },
+    {
+      label: 'Utility',
+      value: 3,
+    },
+    {
+      label: 'Closure',
+      value: 4.5,
+    },
+    {
+      label: 'Norman',
+      value: 4.57,
+    },
+    {
+      label: 'logo',
+      logo: './assets/images/logo.png',
+      value: 0,
+    },
+  ];
 
   return (
     <SafeAreaView style={backgroundStyle}>
@@ -68,38 +91,98 @@ function App(): React.JSX.Element {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
+      <View style={styles.container}>
+        <Section>
+          <View style={styles.totalWrapper}>
+            <View style={styles.dollarSignWrapper}>
+              <Text style={styles.dollarSign}>$</Text>
+              <Text style={styles.totalAmount}>{total}</Text>
+            </View>
+            <Text style={styles.perSquareFoot}>per square foot</Text>
+          </View>
+        </Section>
+
+        <View>
+          <Section>
+            <TextInput
+              style={styles.input}
+              onChangeText={setAmount}
+              value={amount}
+              keyboardType="numeric"
+            />
+
+            <Text style={styles.text}>Unit Price</Text>
+
+            <View style={styles.buttons}>
+              {amount !== '' && selectedBrick ? (
+                <>
+                  <Button
+                    color={'#FF0000'}
+                    title="Clear"
+                    onPress={() => {
+                      setTotal(0);
+                      setAmount('');
+                      setSelectedBrick(undefined);
+                    }}
+                  />
+                  <Button
+                    color={'#0000FF'}
+                    title="Calculate"
+                    onPress={calculateTotal}
+                  />
+                </>
+              ) : null}
+            </View>
           </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
+          <Section>
+            <View style={styles.list}>
+              {options.map(item => {
+                if (item.label === 'logo') {
+                  return (
+                    <View key={item.label} style={[styles.listItem]}>
+                      <Image
+                        style={styles.listItemLogo}
+                        source={require('./assets/images/logo.png')}
+                      />
+                    </View>
+                  );
+                }
+                return (
+                  <TouchableOpacity
+                    key={item.label}
+                    style={[
+                      styles.listItem,
+                      selectedBrick && selectedBrick.label === item.label
+                        ? styles.listItemSelected
+                        : null,
+                    ]}
+                    onPress={() => setSelectedBrick(item)}>
+                    <Text style={styles.listItemValue}>{item.label}</Text>
+                    <Text style={styles.listItemTitle}>{item.value}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
+
+const fontFamily = 'Oswald';
+const opacity = 0.5;
 
 const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 32,
     paddingHorizontal: 24,
+    zIndex: 1,
+  },
+  container: {
+    flexDirection: 'column',
+    height: '100%',
+    justifyContent: 'space-between',
   },
   sectionTitle: {
     fontSize: 24,
@@ -113,6 +196,88 @@ const styles = StyleSheet.create({
   highlight: {
     fontWeight: '700',
   },
+  buttons: {
+    flexDirection: 'row',
+    height: 40,
+    justifyContent: 'space-between',
+  },
+  calculate: {
+    backgroundColor: 'black',
+    color: 'white',
+  },
+  input: {
+    fontFamily: fontFamily,
+    fontSize: 96,
+    margin: 12,
+    borderBottomWidth: 2,
+    borderColor: '#eeeeee',
+    padding: 10,
+    textAlign: 'center',
+  },
+  text: {
+    color: 'black',
+    fontFamily: fontFamily,
+    opacity: opacity,
+    textAlign: 'center',
+  },
+  perSquareFoot: {
+    fontFamily: fontFamily,
+    fontSize: 20,
+    opacity: opacity,
+    marginTop: 64,
+  },
+  totalWrapper: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dollarSignWrapper: {
+    flexDirection: 'row',
+  },
+  dollarSign: {
+    fontFamily: fontFamily,
+    fontSize: 32,
+    opacity: opacity,
+    marginTop: 32,
+  },
+  totalAmount: {
+    fontFamily: fontFamily,
+    fontSize: 96,
+    marginHorizontal: 12,
+  },
+  list: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  listItem: {
+    width: '23%',
+    height: 88,
+    borderColor: '#eeeeee',
+    borderWidth: 2,
+    borderRadius: 6,
+    marginBottom: 12,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listItemTitle: {
+    fontFamily: fontFamily,
+    fontSize: 24,
+    textAlign: 'center',
+  },
+  listItemValue: {
+    fontFamily: fontFamily,
+    fontSize: 12,
+    opacity: opacity,
+    textAlign: 'center',
+  },
+  listItemSelected: {
+    backgroundColor: '#eeeeee',
+    borderColor: 'black',
+  },
+  listItemLogo: {},
 });
 
 export default App;
